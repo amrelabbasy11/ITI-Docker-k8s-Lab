@@ -1,0 +1,45 @@
+name: Docker Setup Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  docker-tasks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Check Docker Version
+        run: docker --version
+
+      - name: Count Running Containers
+        run: docker ps | wc -l
+
+      - name: Run hello-world Container
+        run: docker run hello-world
+
+      - name: Run and Stop Redis Container
+        run: |
+          docker run --name redis-test -d redis
+          sleep 3
+          docker stop redis-test
+          docker rm redis-test
+
+      - name: Delete hello-world and redis Images
+        run: docker rmi hello-world redis || true
+
+      - name: Pull kodekloud/simple-webapp Image
+        run: docker pull kodekloud/simple-webapp
+
+      - name: Run kodekloud/simple-webapp Container
+        run: docker run --name docker-webapp -d -p 8081:8080 kodekloud/simple-webapp
+
+      - name: Build iti-image from Dockerfile
+        run: docker build -t iti-image .
+
+      - name: Run Container from iti-image
+        run: docker run --name iti-container -d -p 8083:80 iti-image
